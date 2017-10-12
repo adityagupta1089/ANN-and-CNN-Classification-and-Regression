@@ -1,0 +1,6 @@
+2015CSB1003/
+*.aux
+*.log
+*.synctex.gz
+*.asv
+steering/
