@@ -1,7 +1,7 @@
 % This function is the primary driver for homework 3 part 1
-function l3a
+function [] = l31(H, eta)
 close all;
-clear all;
+clearvars -except H eta;
 clc;
 % we will experiment with a simple 2d dataset to visualize the decision
 % boundaries learned by a MLP. Our goal is to study the changes to the
@@ -53,16 +53,20 @@ testX=[a1(:) a2(:)];
 nEpochs = 1000;
 
 % learning rate
-eta = 0.01;
+%eta = 0.01;
 
 % number of hidden layer units
-H = 16;
+%H = 16;
 
 % train the MLP using the generated sample dataset
 [w, v, trainerror] = mlptrain([x1;x2;x3],[y1;y2;y3], H, eta, nEpochs);
 
+save(sprintf('data/error_H%d_eta%f.mat', H, eta), 'trainerror');
+
 % plot the train error againt the number of epochs
 figure; plot(1:nEpochs, trainerror, 'b:', 'LineWidth', 2);
+savefig(sprintf('fig/fig1_H%d_eta%f.fig', H, eta));
+saveas(gcf, sprintf('eps/fig1_H%d_eta%f.eps', H, eta));
 
 ydash = mlptest(testX, w, v);
 
@@ -89,6 +93,8 @@ plot(x3(:,1),x3(:,2),'bo', 'LineWidth', 2),
 
 legend('Class 1', 'Class 2', 'Class 3', 'Location', 'NorthOutside', ...
     'Orientation', 'horizontal');
+savefig(sprintf('fig/fig2_H%d_eta%f.fig', H, eta));
+saveas(gcf, sprintf('eps/fig2_H%d_eta%f.eps', H, eta));
 
 % viewing the decision surface for the three classes
 % ydash1 = reshape(ydash(:,1), size(a1));
@@ -170,11 +176,8 @@ for epoch = 1:nEpochs
     ydash = mlptest(X, w, v);
     % compute the training error
     % ---------
-    %'TO DO'% uncomment the next line after adding the necessary code
     trainerror(epoch) = 0.5 * sum(sum((Y - ydash) .^ 2, 2)); 
     % ---------
-    disp(sprintf('training error after epoch %d: %f\n',epoch,...
-        trainerror(epoch)));
 end
 return;
 
