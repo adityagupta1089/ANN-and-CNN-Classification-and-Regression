@@ -26,27 +26,6 @@ The training error for all the points was summed up to get $E=\frac 12\Sigma||y'
 \subsection{MLP Testing}
 The similar formulas as for MLP training were used but here, instead we had multiple points, so an appropriate form was used (The bias term was introduced differently which in this case would be a column vector, rest was same).
 \subsection{Observations}
-Parameters: $\eta=0.0001,$ \verb|nEpochs| $=1000$. The value of $H$ was varied as $2,4,8,16,32$ and $64$. The following graphs for the error versus number of epochs the were obtained:
-\begin{figure}[H]
-\makebox[\textwidth][c]{\includegraphics[scale=0.6]{figure1.eps}}
- \caption{Change in Training Error as a function of total number of epochs varied across the number of nodes in the hidden layer. Here $\eta=0.0001$ (learning rate)}
- \label{fig:1}
- \end{figure}
- The value of H was now varied as $2,4$ and $64$ and the following decision boundaries were obatined:
- \begin{figure}[H]
-\makebox[\textwidth][c]{\includegraphics[scale=1]{h2f2.eps}}
- \caption{Decision Boundary for $H=2$}
- \label{fig:2}
- \end{figure}
-  \begin{figure}[H]
-\makebox[\textwidth][c]{\includegraphics[scale=1]{h4f2.eps}}
- \caption{Decision Boundary for $H=4$}
- \label{fig:3}
- \end{figure}
-  \begin{figure}[H]
-\makebox[\textwidth][c]{\includegraphics[scale=1]{h64f2.eps}}
- \caption{Decision Boundary for $H=64$}
- \label{fig:4}
- \end{figure}
+
 \subsection{Discussion and Conclusions}
 \end{document}
