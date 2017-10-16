@@ -3,6 +3,8 @@
 \usepackage{graphicx}
 \usepackage{epstopdf}
 \usepackage{float}
+\usepackage{subcaption}
+\newcommand{\myScale}{0.56}
 \title{CSL603 - Lab 3\\Multi Layer Perceptron}
 \author{Aditya Gupta\\2015CSB1003}
 \begin{document}
@@ -19,16 +21,160 @@
 \item finally the learning rate
 \end{itemize}
 \subsection{MLP Training}
-During forward pass, we made $z_h=\sigma(w_h^Tx)$ and $y'_k=\sigma(v_k^Tz)$ (The weights and points had different orientation to what discussed in class, therefore an appropriate formula equivalent to these was used.)
-During backpropagation, for a particular point we used $$\Delta v_{hk}=\underbrace{\eta(y'_k-y_k)y'_k(1-y'_k)}_{\text{Common for a particular } k}z_h$$ and $$\Delta w_{jh}=\underbrace{\eta\left(\sum_k(y'_k-y_k)y'_k(1-y'_k)v_{hk}\right)z_h(1-z_h)}_{\text{Common for a particular }h}x_j$$ (Various values were calculated only once which were common for a particular $k$ for $\Delta v_{hk}$ and these were further used in case of $\Delta w_{jh}$, moreover the common values in case of $\Delta w_{jh}$ for a particular $h$ were also calculated only once.)
+During forward pass, we made $z_h=\sigma(w_h^Tx)$, $y'_k=\exp(v_k^Tz)/\sum_{k'=1}^K \exp(v_{k'}^Tz)$ (The weights and points had different orientation to what discussed in class, therefore an appropriate formula equivalent to these was used.)
+During backpropagation, for a particular point we used $$\Delta v_{hk}=\underbrace{\eta(y'_k-y_k)}_{\text{Common for a particular } k}z_h$$, $$\Delta w_{jh}=\underbrace{\eta\left(\sum_k(y'_k-y_k)v_{hk}\right)z_h(1-z_h)}_{\text{Common for a particular }h}x_j$$ (Various values were calculated only once which were common for a particular $k$ for $\Delta v_{hk}$ and these were further used in case of $\Delta w_{jh}$, moreover the common values in case of $\Delta w_{jh}$ for a particular $h$ were also calculated only once.)
 \subsection{Training Error}
-The training error for all the points was summed up to get $E=\frac 12\Sigma||y'_i-y_i||^2$ where the subscript denotes $i$-th point, rather than the $i$-th dimension for a particular point.
+The training error was calculated as $E(w,v)=-\sum_{k=1}^K y_k\log y'_k$ for a particular point that was trained in this epoch.
 \subsection{MLP Testing}
 The similar formulas as for MLP training were used but here, instead we had multiple points, so an appropriate form was used (The bias term was introduced differently which in this case would be a column vector, rest was same).
 \subsection{Observations}
-\subsubsection{Varying the training iterations}
-
 \subsubsection{Varying the number of hidden layer nodes}
+The following figures depict the change in the sum of squared error vs. the number of training iterations for a particular $\eta$ value and varying the number of hidden layer nodes in powers of $2$:
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{{../eps2/eta0.100000}.eps}
+\caption{Change in Sum of Squared Error vs the Training Iterations for different values of H. $\eta=0.1$}
+\label{fig:fig1}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{{../eps2/eta0.010000}.eps}
+\caption{Change in Sum of Squared Error vs the Training Iterations for different values of H. $\eta=0.01$}
+\label{fig:fig2}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{{../eps2/eta0.001000}.eps}
+\caption{Change in Sum of Squared Error vs the Training Iterations for different values of H. $\eta=0.001$}
+\label{fig:fig3}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{{../eps2/eta0.000100}.eps}
+\caption{Change in Sum of Squared Error vs the Training Iterations for different values of H. $\eta=0.0001$}
+\label{fig:fig4}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{{../eps2/eta0.000010}.eps}
+\caption{Change in Sum of Squared Error vs the Training Iterations for different values of H. $\eta=0.00001$}
+\label{fig:fig5}
+\end{figure}
+
 \subsubsection{Varying the learning rate}
+The following figures depict the change in the sum of squared error vs. the number of training iterations for a particular value of $H$ and varying the $\eta$:
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{../eps2/H2.eps}
+\caption{Change in Sum of Squared Error vs the Training Iterations for different values 
+of $\eta$. $H=2$}
+\label{fig:fig6}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{../eps2/H4.eps}
+\caption{Change in Sum of Squared Error vs the Training Iterations for different values of $\eta$. $H=4$}
+\label{fig:fig7}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{../eps2/H8.eps}
+\caption{Change in Sum of Squared Error vs the Training Iterations for different values of $\eta$. $H=8$}
+\label{fig:fig8}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{../eps2/H16.eps}
+\caption{Change in Sum of Squared Error vs the Training Iterations for different values of $\eta$. $H=16$}
+\label{fig:fig9}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{../eps2/H32.eps}
+\caption{Change in Sum of Squared Error vs the Training Iterations for different values of $\eta$. $H=32$}
+\label{fig:fig10}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{../eps2/H64.eps}
+\caption{Change in Sum of Squared Error vs the Training Iterations for different values of $\eta$. $H=64$}
+\label{fig:fig11}
+\end{figure}
+
+\subsubsection{Varying the training iterations}
+The observations for the change in the sum of squared error by varying the training iterations can be made through the previous graphs.
+
+\subsubsection{Change in Decision Boundary}
+The change in decision boundaries for various values of $H$  and $\eta$ can be seen in the following graphs. Here red dots represent Class 1, green pluses represent Class 2 and blue circles represent Class 3.
+
+\begin{figure}[H]
+\minipage{0.32\textwidth}
+\includegraphics[scale=0.25]{{../eps/fig2_H2_eta0.010000}.eps}
+\subcaption{ $H=2$}
+\endminipage\hfill
+\minipage{0.32\textwidth}
+\includegraphics[scale=0.25]{{../eps/fig2_H4_eta0.010000}.eps}
+\subcaption{ $H=4$}
+\endminipage\hfill
+\minipage{0.32\textwidth}
+\includegraphics[scale=0.25]{{../eps/fig2_H64_eta0.010000}.eps}
+\subcaption{ $H=64$}
+\endminipage\hfill
+\caption{Deicision boundary for $\eta=0.01$}
+\label{fig:fig12}
+\end{figure}
+
+\begin{figure}[H]
+\minipage{0.32\textwidth}
+\includegraphics[scale=0.25]{{../eps/fig2_H2_eta0.001000}.eps}
+\caption{ $H=2$}
+\endminipage\hfill
+\minipage{0.32\textwidth}
+\includegraphics[scale=0.25]{{../eps/fig2_H4_eta0.001000}.eps}
+\caption{ $H=4$}
+\endminipage\hfill
+\minipage{0.32\textwidth}
+\includegraphics[scale=0.25]{{../eps/fig2_H64_eta0.001000}.eps}
+\caption{ $H=64$}
+\endminipage\hfill
+\caption{Deicision boundary for $\eta=0.001$}
+\label{fig:fig13}
+\end{figure}
+
+\begin{figure}[H]
+\minipage{0.32\textwidth}
+\includegraphics[scale=0.25]{{../eps/fig2_H2_eta0.000100}.eps}
+\caption{ $H=2$}
+\endminipage\hfill
+\minipage{0.32\textwidth}
+\includegraphics[scale=0.25]{{../eps/fig2_H4_eta0.000100}.eps}
+\caption{ $H=4$}
+\endminipage\hfill
+\minipage{0.32\textwidth}
+\includegraphics[scale=0.25]{{../eps/fig2_H64_eta0.000100}.eps}
+\caption{ $H=64$}
+\endminipage\hfill
+\caption{Deicision boundary for $\eta=0.0001$}
+\label{fig:fig14}
+\end{figure}
+
+\begin{figure}[H]
+\minipage{0.32\textwidth}
+\includegraphics[scale=0.25]{{../eps/fig2_H2_eta0.000010}.eps}
+\caption{ $H=2$}
+\endminipage\hfill
+\minipage{0.32\textwidth}
+\includegraphics[scale=0.25]{{../eps/fig2_H4_eta0.000010}.eps}
+\caption{ $H=4$}
+\endminipage\hfill
+\minipage{0.32\textwidth}
+\includegraphics[scale=0.25]{{../eps/fig2_H64_eta0.000010}.eps}
+\caption{ $H=64$}
+\endminipage\hfill
+\caption{Deicision boundary for $\eta=0.00001$}
+\label{fig:fig15}
+\end{figure}
+
 \subsection{Discussion and Conclusions}
+\subsubsection{Hidden Layer Nodes}
+As we can see from Figure \ref{fig:fig1} and \ref{fig:fig2} increasing the number of hidden layer nodes increases the convergence rate for the neural network but in the end, all the networks become almost the same given sufficient iterations, although $H=64$ still dominates in all cases. However, in case of lower learning rate, networks with more number of hidden layer nodes are able to converge quickly in comparison to others as can be seen in Figures \ref{fig:fig3}, \ref{fig:fig4} and \ref{fig:fig5}. This is because the network will be able to represent more complex data with an increase in the number of hidden layer nodes which will represent various intermediate functions and representation of-of data (i.e. classification into classes) can be done quickly with more hidden layer nodes rather than taking more iterations with less number of hidden layer nodes. Also, this process will saturate and beyond a particular limit increasing the hidden layer nodes will not make any significant difference.
+
+\subsubsection{Learning Rate}
+As we can see from Figure \ref{fig:fig6}, \ref{fig:fig7}, \ref{fig:fig8}, \ref{fig:fig9}, \ref{fig:fig10} and \ref{fig:fig11}; increasing the learning rate leads to faster convergence. This is because the magnitude of the learning rate hasn't been too high to cause oscillations in the error space and hence increasing the learning rate within particular limits will only fasten the process of convergence of the network to a better solution.
+
+\subsubsection{Training Iterations}
+We are performing a stochastic gradient descent on the data which is based on finding the gradient with respect to a particular point and changing weights accordingly, this method will give better and better results as network is trained with more and more number of points, i.e. with increase in total iterations the error in the output of the network decreases as can be seen in all the Figures.
+
+\subsubsection{Decision Boundary}
+As we can see for appropriate learning rate all networks (i.e. varying them respect to the number of hidden layer nodes) give a very accurate description of decision boundary though they differ slightly in term of the structure and also the sum of squared errors. The reason for the latter is of the ability of networks with more complexity (more hidden layer nodes) give very strong probabilities in terms of output in case of the three classes whereas weaker networks give only mild probabilities everywhere, though the separating boundary can still remain same. We can also that though correct, weaker networks are ``unsure'' about their decision or are ``indecisive'' in cases. Also, here network with higher hidden layer nodes were able to get a nice decision boundary for even low learning rate as can be seen from Figures \ref{fig:fig12}, \ref{fig:fig13}, \ref{fig:fig14} and \ref{fig:fig15}. 
+\section{Neural Network to predict the steering angle from the road image for a self-driving car}
 \end{document}

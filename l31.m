@@ -1,8 +1,5 @@
 % This function is the primary driver for homework 3 part 1
 function [] = l31(H, eta)
-close all;
-clearvars -except H eta;
-clc;
 % we will experiment with a simple 2d dataset to visualize the decision
 % boundaries learned by a MLP. Our goal is to study the changes to the
 % decision boundary and the training error with respect to the following
@@ -66,7 +63,7 @@ save(sprintf('data/error_H%d_eta%f.mat', H, eta), 'trainerror');
 % plot the train error againt the number of epochs
 figure; plot(1:nEpochs, trainerror, 'b:', 'LineWidth', 2);
 savefig(sprintf('fig/fig1_H%d_eta%f.fig', H, eta));
-saveas(gcf, sprintf('eps/fig1_H%d_eta%f.eps', H, eta));
+saveas(gcf, sprintf('eps/fig1_H%d_eta%f.eps', H, eta), 'epsc');
 
 ydash = mlptest(testX, w, v);
 
@@ -91,10 +88,10 @@ plot(x1(:,1),x1(:,2),'r.', 'LineWidth', 2),
 plot(x2(:,1),x2(:,2),'g+', 'LineWidth', 2),
 plot(x3(:,1),x3(:,2),'bo', 'LineWidth', 2),
 
-legend('Class 1', 'Class 2', 'Class 3', 'Location', 'NorthOutside', ...
-    'Orientation', 'horizontal');
+%legend('Class 1', 'Class 2', 'Class 3', 'Location', 'NorthOutside', ...
+%    'Orientation', 'horizontal');
 savefig(sprintf('fig/fig2_H%d_eta%f.fig', H, eta));
-saveas(gcf, sprintf('eps/fig2_H%d_eta%f.eps', H, eta));
+saveas(gcf, sprintf('eps/fig2_H%d_eta%f.eps', H, eta), 'epsc');
 
 % viewing the decision surface for the three classes
 % ydash1 = reshape(ydash(:,1), size(a1));
@@ -151,7 +148,8 @@ for epoch = 1:nEpochs
         % hidden to output layer
         % calculate the output of the output layer units - ydash
         % ---------
-        y_dash = sigmoid(z * v');
+        y_dash = exp(z * v');
+        y_dash = y_dash / sum(y_dash);
         % ---------
         
         % backward pass
@@ -159,7 +157,7 @@ for epoch = 1:nEpochs
         % update the weights for the connections between hidden and
         % outlayer units
         % ---------
-        delta1 = repmat(eta * (y_dash - y) .* y_dash .* (1 - y_dash), H + 1, 1)';
+        delta1 = repmat(eta * (y_dash - y), H + 1, 1)';
         deltaV = delta1 .* repmat(z, K, 1);
         v = v - deltaV;
         % ---------
@@ -173,10 +171,10 @@ for epoch = 1:nEpochs
         w = w - deltaW;
         % ---------
     end
-    ydash = mlptest(X, w, v);
+    %ydash = mlptest(X, w, v);
     % compute the training error
     % ---------
-    trainerror(epoch) = 0.5 * sum(sum((Y - ydash) .^ 2, 2)); 
+    trainerror(epoch) = -sum(y .* log(y_dash)) ;
     % ---------
 end
 return;
@@ -199,7 +197,8 @@ z = [ones(N, 1) sigmoid([ones(N, 1) X] * w')];
 % ---------% hidden to output for all the data points
 % calculate the output of the output layer units
 % ---------
-ydash = sigmoid(z * v');
+ydash = exp(z * v');
+ydash = ydash ./ repmat(sum(ydash, 2), 1, K);
 % ---------
 return;
 
