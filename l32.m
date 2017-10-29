@@ -1,15 +1,14 @@
 %% clear
-close all
-clear variables
 clc
 %% read input
 A = readtable('steering/data.txt', 'ReadVariableNames', 0, 'Delimiter', ...
     '\t');
-N = size(A, 1);
+N = 10;%size(A, 1);
 X = zeros(1024,N);
 Y = zeros(1,N);
+wb = waitbar(0,'Please Wait');
 for i = 2:N
-    disp(i);
+    waitbar(i/N,wb);
     %% read image and degree
     name = A{i,1};
     name = name{1,1};
@@ -19,6 +18,7 @@ for i = 2:N
     X(:,i) = img(:);
     Y(i) = A{i,2};
 end
+close(wb);
 %% constants
 architecture = [1024, 512, 64, 1];
 K = length(architecture);
@@ -40,6 +40,8 @@ end
 %% training
 N = size(X_train, 2);
 iporder = randperm(N);
+X = X(:,iporder);
+Y = Y(iporder);
 for e = 1:epochs
     fprintf('Epoch #%d\n', e);
     for i = 1:minibatch_size:N-minibatch_size
@@ -47,7 +49,7 @@ for e = 1:epochs
         for j = 1:K-1
             delta_ws{j} = zeros(size(ws{j}));
         end
-        for j = iporder(i:i+minibatch_size)
+        for j = i:i+minibatch_size
             x = X_train(:,j);
             y = Y_train(j);
             %% forward pass
@@ -99,6 +101,3 @@ fprintf('Total Error is %f\n', tot_err);
 function val = sigmoid(z)
     val = 1 ./ (1 + exp(-z));
 end
-    
-
-

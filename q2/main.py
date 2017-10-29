@@ -1,8 +1,9 @@
-import numpy
 import cv2
-import random
 import math
+import numpy
+import random
 from tqdm import *
+
 
 class Neural_Network:
     # data lists
@@ -27,13 +28,14 @@ class Neural_Network:
 
         # read individual images
         print('Reading images')
-        for i in tqdm(range(1,len(content))):
+        i=0
+        for i in tqdm(range(len(content))):
             line = content[i]
             [name, deg] = line.split('\t')
             # name is of the form './abc' so skip the '.' i.e. name[1:]
             img = cv2.imread('../steering' + name[1:], cv2.IMREAD_GRAYSCALE)
             self.X.append(img.flatten().T / 255)
-            self.Y.append(float(deg[-2]))
+            self.Y.append(float(deg[:-2]))
 
         print('Read Images')
         # initialize weights and layers
@@ -54,25 +56,26 @@ class Neural_Network:
         K  = len(self.architecture)
         for e in range(epochs):
             print('Epoch #' + str(e+1))
-            for i in range(0, N1, minibatch_size):
+            for i in tqdm(range(0, N1, minibatch_size)):
                 train_mini = train_data[i:i + minibatch_size]
                 delta_ws = [numpy.zeros(weight.shape) for weight in self.weights]
                 for x, y in train_mini:
                     # forward pass
                     vs = [numpy.append([1], x)]                  
                     for i in range(1, K):
-                        vs.append(sigmoid(numpy.matmul(self.weights[i-1], vs[-1])))
+                        vs.append(sigmoid(self.weights[i-1].dot(vs[-1])))
                         if i != K - 1:
                             vs[-1] = numpy.append([1], vs[-1])
                     # calculation of gradient
                     delta = (vs[-1] - y) * vs[-1] * (1.0 - vs[-1])
-                    delta_ws[-1] += eta * delta * vs[-2].T                
+                    delta_ws[-1] += delta * vs[-2].T                
                     # backward propagation
-                for i in range(K-3, -1, -1):
-                    delta = numpy.matmul(self.weights[i+1].T, delta if i == K - 3 else delta[1:])
-                    delta_ws[i] += eta * numpy.outer(delta[1:], vs[i])
+                    for i in range(K-3, -1, -1):
+                        delta = self.weights[i+1].T.dot(delta)
+                        delta_ws[i] += numpy.outer(delta[1:], vs[i])
+                        delta = delta[1:]
                 # weight update
-                self.weights = [weight - delta_w for (weight, delta_w) in zip(self.weights, delta_ws)]       
+                self.weights = [weight - eta * delta_w for (weight, delta_w) in zip(self.weights, delta_ws)]       
                     
     def test(self):
         tot_err = 0
@@ -80,7 +83,7 @@ class Neural_Network:
         for x, y in zip(self.X_test, self.Y_test):
             v = numpy.append([1], x)
             for i in range(1, K):
-                v = sigmoid(numpy.matmul(self.weights[i-1], v))
+                v = sigmoid(numpy.dot(self.weights[i-1], v))
                 if i != K - 1:
                     v = numpy.append([1], v)
             err = numpy.linalg.norm(y - v) / 2.0
@@ -102,7 +105,7 @@ if __name__ == "__main__":
     network = Neural_Network(architecture)
 
     network.split_data(split_ratio)
-    step = 50
+    step = 1
     for _ in range(step):
         network.train(int(epochs / step), learning_rate, minibatch_size)
         network.test()
