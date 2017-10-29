@@ -157,8 +157,8 @@ for epoch = 1:nEpochs
         % update the weights for the connections between hidden and
         % outlayer units
         % ---------
-        delta1 = repmat(eta * (y_dash - y), H + 1, 1)';
-        deltaV = delta1 .* repmat(z, K, 1);
+        delta1 = (y_dash - y)';
+        deltaV = eta * delta1 * z;
         v = v - deltaV;
         % ---------
         % update the weights for the connections between the input and
@@ -166,8 +166,8 @@ for epoch = 1:nEpochs
         % ---------
         % NOTE: weights of v from bias term of z does not flow back to w,
         % hence we skip 1st column.
-        delta2 = sum(delta1 .* v) .* z .* (1 - z);
-        deltaW = repmat(delta2(2:end), D + 1, 1)' .* repmat(x, H, 1);
+        delta2 = sum(repmat(eta * (y_dash - y)', 1, H + 1) .* v) .* z .* (1 - z);
+        deltaW = eta * delta2(2:end)' * x;
         w = w - deltaW;
         % ---------
     end

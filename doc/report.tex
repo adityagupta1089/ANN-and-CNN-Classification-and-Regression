@@ -4,6 +4,10 @@
 \usepackage{epstopdf}
 \usepackage{float}
 \usepackage{subcaption}
+\usepackage{tikz}
+\usepackage{ifthen}
+\usepackage{color}
+\usepackage{graphicx}
 \newcommand{\myScale}{0.56}
 \title{CSL603 - Lab 3\\Multi Layer Perceptron}
 \author{Aditya Gupta\\2015CSB1003}
@@ -176,5 +180,85 @@ We are performing a stochastic gradient descent on the data which is based on fi
 
 \subsubsection{Decision Boundary}
 As we can see for appropriate learning rate all networks (i.e. varying them respect to the number of hidden layer nodes) give a very accurate description of decision boundary though they differ slightly in term of the structure and also the sum of squared errors. The reason for the latter is of the ability of networks with more complexity (more hidden layer nodes) give very strong probabilities in terms of output in case of the three classes whereas weaker networks give only mild probabilities everywhere, though the separating boundary can still remain same. We can also that though correct, weaker networks are ``unsure'' about their decision or are ``indecisive'' in cases. Also, here network with higher hidden layer nodes were able to get a nice decision boundary for even low learning rate as can be seen from Figures \ref{fig:fig12}, \ref{fig:fig13}, \ref{fig:fig14} and \ref{fig:fig15}. 
+
 \section{Neural Network to predict the steering angle from the road image for a self-driving car}
+\subsection{Network Structure}
+If we consider the network to be composed of $n_1, n_2, ... n_k$ nodes in each layer with the corresponding vectors to be $\vec v_1,\vec v_2, ... \vec v_k$ and the weights for each layer be $ \vec w_1, \vec w_2, ... \vec w_{k-1}$, we can then say that $v_{ij}=\sigma(\vec w_{i-1,j}^T \vec v_{i-1}), i\in\{2,3,..k\}$. In other words: 
+\begin{gather*}
+\vec v_i=\begin{pmatrix}v_{i,1}\\v_{i,2}\\...\\v_{i,n_i}\end{pmatrix}_{n_i\times1},
+\vec w_{i,j}=\begin{pmatrix}w_{i,1,j}\\w_{i,2,j}\\...\\w_{i,n_i,j}\end{pmatrix}_{n_i\times 1}\\
+\vec w_{i}=\begin{pmatrix}\vec w_{i,1}^T\\\vec w_{i,2}^T\\...\\\vec w_{i,n_{i+1}}^T\end{pmatrix}_{n_{i+1}\times n_i}=\begin{pmatrix}w_{i,1,1}&w_{i,2,1}&...&w_{i,n_{i},1}\\w_{i,1,2}&w_{i,2,2}&...&w_{i,n_{i},2}\\\vdots&\vdots&\ddots&\vdots\\w_{i,1,n_{i+1}}&w_{i,2,n_{i+1}}&...&w_{i,n_i,n_{i+1}}\end{pmatrix}
+\end{gather*}
+where
+\begin{align*}
+\vec v_i&\text{ is Layer $i$}\\
+v_{i,j}&\text{ is $j^\text{th}$ node in Layer $i$}\\
+\vec w_i&\text{ is weight from Layer $i$ to $i+1$}\\
+\vec w_{i,j}&\text{ is weight from Layer $i$ to $j^\text{th}$ node in Layer $i+1$}\\
+w_{i,a,b}&\text{ is weight from $a^\text{th}$ node in Layer $i$ to $b^\text{th}$ node in Layer $i+1$}
+\end{align*}
+and thus
+\begin{align*}
+v_{i,j} &=\sigma(\vec w_{i-1,j}^T\vec v_{i-1})\\
+&=  \sigma\left(
+	(w_{i-1,1,j},w_{i-1,2,j},...,w_{i-1,n_{i-1},j})
+	\begin{pmatrix}
+		v_{i-1,1}\\v_{i-1,2}\\...\\v_{i-1,n_{i-1}}
+	\end{pmatrix}
+	\right)\\
+&=\sigma\left(\sum_{l=1}^{n_{i-1}}w_{i-1,l,j}v_{i-1,l}\right)\\
+\end{align*}
+and
+\begin{align*}
+\vec v_i&=\begin{pmatrix}v_{i,1}\\v_{i,2}\\...\\v_{i,n_{i}}\end{pmatrix}
+=\begin{pmatrix}\sigma(\vec w_{i-1,1}^T\vec v_{i-1})\\\sigma(\vec w_{i-1,2}^T\vec v_{i-1})\\...\\\sigma(\vec w_{i-1,n_i}^T\vec v_{i-1})\end{pmatrix}
+=\vec \sigma\left(\begin{pmatrix}\vec w_{i-1,1}^T\vec v_{i-1}\\ \vec w_{i-1,2}^T\vec v_{i-1}\\ ...\\ \vec w_{i-1,n_i}^T\vec v_{i-1}\end{pmatrix}\right)\\
+&=\vec \sigma (\vec w_{i-1}\vec v_{i-1})
+\end{align*}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}
+[auto, nd/.style = {circle,minimum size=1cm,draw=blue!50,fill=blue!20,thick}]
+
+\foreach \n/\name in {1/1,2/2,3/x,4/{$n_1$}}
+		\node[nd] (I\n) at (0,-2*\n) [label=left:{ \ifthenelse{\equal{\name}{x}}{{...}}{$v_{i,\text{\name}}$} }] {};
+		
+\foreach \n/\name in {1/1,2/2,3/x,4/{$n_2$}}
+		\node[nd] (J\n) at (5,-2*\n) [label=right:{ \ifthenelse{\equal{\name}{x}}{{...}}{$v_{i+1,\text{\name}}$} }] {};		
+		
+\foreach \i/\o in {1/1,2/2,3/x,4/{$n_1$}}{
+	\foreach \j/\k in {1/1,2/2,3/x,4/{$n_2$}}{
+		\draw [->] (I\i) -- (J\j);
+	}
+}
+
+\node[red,above] at (I1.north) {Layer $i$};
+\node[red,above] at (J1.north) {Layer $i+1$};
+
+\end{tikzpicture}
+\caption{Portion of a neural network from layer $i$ to layer $i+1$. The weight used here will be $\vec w_i$.}
+\end{figure}
+\subsection{Gradient Descent}
+The error term for a minibatch of size $n$ (i.e. from $j$ to $j+n-1$) would be:
+$$E = \sum_{i=j}^{j+n-1}\frac 12 || o^i- v_{k}^i||^2$$
+where superscript $i$ denotes the $i$-th point.
+For a particular point the error would be:
+$$\frac 12 || o- v_{k}||^2=\frac 12\sum_{l=1}^{n_k}(o_{l}-v_{k,l})^2$$
+The gradient wrt weights $w_{k-1,a_{k-1},a_{k}}$ can be obtained using chain rule:\\
+\[ \scalebox{1.5}{$\frac{\partial E}{\partial w_{k-1,a_{k-1},a_{k}}}=\underbrace{(v_{k,a_k}-o_{a_k})v_{k,a_k}(1-v_{k,a_k})}_{\delta_{k,a_k}}v_{k-1,a_{k-1}}$} \]
+Similarly for any previous layer we can obtain:\\
+\[ \scalebox{1.5}{$\frac{\partial E}{\partial w_{i,a_i,a_{i+1}}}=\underbrace{\sum_{a_{i+2}=1}^{n_{i+2}} \delta_{i+2,a_{i+2}}w_{i+1,a_{i+1},a_{i+2}}}_{\delta_{i+1,a_{i+1}}}v_{i,a_i}$} \]
+and wrt a particular point\\
+\[ \scalebox{1.5}{$\Delta w_{i,a_i,a_{i+1}}=\eta \delta_{i+1,a_{i+1}}v_{i,a_i}$} \]
+For minibatch gradient descent we would add up these $\Delta w_{i,a_i,a_{i+1}}$'s. Also note that we also have some biases that would not propagate the gradient backwards so in case of calculation of $\delta_{i,a_i}$ we would neglect the term coming from $v_{a_{i+1}}=1$ i.e. the bias term of the $i+1$-th layer.
+
+Now we find a relation between $\delta_{i,j}$'s. We define $\vec \delta_i$ as follows:
+$$\vec \delta_i=\begin{pmatrix}\delta_{i,1}\\\delta_{i,2}\\...\\\delta_{i,n_i}\end{pmatrix}_{n_i\times 1}$$
+And we define $\delta_{i,j}$ as follows:
+$$\delta_{i,j}=\begin{cases}(v_{k,j}-o_j)v_{k,j}(1-v_{k,j})&i=k\\\displaystyle\sum_{x=1}^{n_{i+1}}\delta_{i+1,x}w_{i,j,x}&\text{otherwise}\end{cases}$$
+We can observe that:
+\begin{gather*}\Delta\vec w_{i}=\eta \vec \delta_{i+1}\vec v_{i}^T\\
+\vec\delta_i=\vec w_i^T\vec \delta_{i+1}
+\end{gather*}
 \end{document}
