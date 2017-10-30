@@ -1,7 +1,8 @@
 import cv2
 import math
-import numpy
+import numpy as np
 import random
+import matplotlib.pyplot as plt
 from tqdm import *
 
 
@@ -37,64 +38,76 @@ class Neural_Network:
             self.X.append(img.flatten().T / 255)
             self.Y.append(float(deg[:-2]))
 
-        print('Read Images')
         # initialize weights and layers
         # ni+1 for a bias term
-        self.weights = [(numpy.random.rand(ni_1, ni + 1) - 0.5) / 50 for (ni, ni_1) in zip(architecture, architecture[1:])]
+        self.weights = [(np.random.rand(ni_1, ni + 1) - 0.5) / 50 for (ni, ni_1) in zip(architecture, architecture[1:])]
 
     def split_data(self, ratio):
         split        = math.floor(ratio * len(self.X))
-        self.X_train = self.X[0:split]
-        self.Y_train = self.Y[0:split]
-        self.X_test  = self.X[split + 1:]
-        self.Y_test  = self.Y[split + 1:]
+        self.X_train = np.column_stack(tuple(self.X[0:split]))
+        self.Y_train = np.array(self.Y[0:split])
+        self.X_test  = np.column_stack(tuple(self.X[split + 1:]))
+        self.Y_test  = np.array(self.Y[split + 1:])
 
-    def train(self, epochs, eta, minibatch_size):        
-        train_data = list(zip(self.X_train, self.Y_train))
-        random.shuffle(train_data)
-        N1 = len(train_data)
-        K  = len(self.architecture)
-        for e in range(epochs):
-            print('Epoch #' + str(e+1))
-            for i in tqdm(range(0, N1, minibatch_size)):
-                train_mini = train_data[i:i + minibatch_size]
-                delta_ws = [numpy.zeros(weight.shape) for weight in self.weights]
-                for x, y in train_mini:
-                    # forward pass
-                    vs = [numpy.append([1], x)]                  
-                    for i in range(1, K):
-                        vs.append(sigmoid(self.weights[i-1].dot(vs[-1])))
-                        if i != K - 1:
-                            vs[-1] = numpy.append([1], vs[-1])
-                    # calculation of gradient
-                    delta = (vs[-1] - y) * vs[-1] * (1.0 - vs[-1])
-                    delta_ws[-1] += delta * vs[-2].T                
-                    # backward propagation
-                    for i in range(K-3, -1, -1):
-                        delta = self.weights[i+1].T.dot(delta)
-                        delta_ws[i] += numpy.outer(delta[1:], vs[i])
-                        delta = delta[1:]
+    def train(self, epochs, eta, minibatch_size):
+        N = self.X_train.shape[1]
+        K = len(self.architecture)
+        order = list(range(N))
+        random.shuffle(order)
+        self.X_train = self.X_train[:,order]
+        self.Y_train = self.Y_train[order]
+        train_errors = []
+        test_errors  = []
+        print('Training for %d epochs' % epochs)
+        for e in tqdm(range(epochs)):
+            for i in range(0, N, minibatch_size):
+                x = self.X_train[:,i:i+minibatch_size]
+                y = self.Y_train[i:i+minibatch_size]
+                _N = x.shape[1]
+                delta_ws = [np.zeros(weight.shape) for weight in self.weights]
+                # forward pass
+                Vs = [np.row_stack((np.ones((1,_N)), x))]
+                for i in range(1, K):
+                    Vs.append(sigmoid(self.weights[i-1].dot(Vs[-1])))
+                    if i != K - 1:
+                        Vs[-1] = np.row_stack((np.ones((1,_N)), Vs[-1]))
+                # calculation of gradient
+                xi = (Vs[-1] - y) * Vs[-1] * (1.0 - Vs[-1])
+                delta_ws[-1] = eta * xi.dot(Vs[-2].T)
+                # backward propagation
+                for i in range(K-3,-1,-1):
+                    xi = self.weights[i+1].T.dot(xi)
+                    delta_ws[i] = eta * xi[1:,:].dot(Vs[i].T)
+                    xi = xi[1:,:]
                 # weight update
-                self.weights = [weight - eta * delta_w for (weight, delta_w) in zip(self.weights, delta_ws)]       
-                    
-    def test(self):
-        tot_err = 0
+                self.weights = [weight - delta_w for (weight, delta_w) in zip(self.weights, delta_ws)]
+            """train_error = self.test(train=True)
+            test_error  = self.test(train=False)
+            train_errors.append(train_error)
+            test_errors.append(test_error)"""
+        return (train_errors, test_errors)
+
+    def test(self, train):
+        if train:
+            x, y = self.X_train, self.Y_train
+        else:
+            x, y = self.X_test, self.Y_test
+        err = 0
         K  = len(self.architecture)
-        for x, y in zip(self.X_test, self.Y_test):
-            v = numpy.append([1], x)
-            for i in range(1, K):
-                v = sigmoid(numpy.dot(self.weights[i-1], v))
-                if i != K - 1:
-                    v = numpy.append([1], v)
-            err = numpy.linalg.norm(y - v) / 2.0
-            tot_err += err
-        print('Error is '+ str(tot_err))
+        N = x.shape[1]
+        Vs = [np.row_stack((np.ones((1,N)), x))]
+        for i in range(1, K):
+            Vs.append(sigmoid(self.weights[i-1].dot(Vs[-1])))
+            if i != K - 1:
+                Vs[-1] = np.row_stack((np.ones((1,N)), Vs[-1]))
+        err = np.linalg.norm(Vs[-1] - y) / 2
+        return err
 
 def sigmoid(z):
-    return 1.0 / (1.0 + numpy.exp(-z))
+    return 1 / (1 + np.exp(-z))
 
 if __name__ == "__main__":
-    
+
     # create network
     architecture    = [1024, 512, 64, 1]
     split_ratio     = 0.8
@@ -105,7 +118,12 @@ if __name__ == "__main__":
     network = Neural_Network(architecture)
 
     network.split_data(split_ratio)
-    step = 1
-    for _ in range(step):
-        network.train(int(epochs / step), learning_rate, minibatch_size)
-        network.test()
+    
+    train_errors, test_errors = network.train(epochs, learning_rate, minibatch_size)
+    plt.plot(np.arange(1,epochs+1), train_errors, label='Training Error')
+    plt.plot(np.arange(1,epochs+1), test_errors, label='Testing Error')
+    plt.axis([0,epochs+1,0,3.5])
+    plt.ylabel('Sum of Squared Error')
+    plt.xlabel('Epochs')
+    plt.legend(loc='upper right')
+    plt.show()

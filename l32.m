@@ -3,17 +3,15 @@ clc
 %% read input
 A = readtable('steering/data.txt', 'ReadVariableNames', 0, 'Delimiter', ...
     '\t');
-N = 10;%size(A, 1);
+N = size(A, 1);
 X = zeros(1024,N);
 Y = zeros(1,N);
 wb = waitbar(0,'Please Wait');
 for i = 2:N
     waitbar(i/N,wb);
     %% read image and degree
-    name = A{i,1};
-    name = name{1,1};
-    name = name(3:end);
-    I = imread(strcat('steering/', name));
+    name = A{i,1}{1,1}(3:end);
+    I = imread(['steering/' name]);
     img = double(rgb2gray(I))/255;
     X(:,i) = img(:);
     Y(i) = A{i,2};
@@ -43,60 +41,63 @@ iporder = randperm(N);
 X = X(:,iporder);
 Y = Y(iporder);
 for e = 1:epochs
-    fprintf('Epoch #%d\n', e);
+    fprintf('Epoch #%d: ', e);
     for i = 1:minibatch_size:N-minibatch_size
         delta_ws = cell(1,K-1);
         for j = 1:K-1
             delta_ws{j} = zeros(size(ws{j}));
         end
-        for j = i:i+minibatch_size
-            x = X_train(:,j);
-            y = Y_train(j);
-            %% forward pass
-            vs = cell(1,K);
-            vs{1} = [1;x];
-            for l = 2:K
-                vs{l} = sigmoid(ws{l-1} * vs{l-1});
-                if l ~= K
-                    vs{l} = [1;vs{l}];
-                end
+        rng = i:i+minibatch_size;
+        x = X_train(:,rng);
+        y = Y_train(rng);
+        %% forward pass
+        vs = cell(1,K);
+        vs{1} = [ones(1,size(x,2));x];
+        for l = 2:K
+            vs{l} = sigmoid(ws{l-1} * vs{l-1});
+            if l ~= K
+                vs{l} = [ones(1,size(vs{l},2));vs{l}];
             end
-            %% gradient calculation
-            delta = (vs{K} - y) .* vs{K} .* (1.0 - vs{K});
-            delta_ws{K-1} = delta_ws{K-1} + eta * delta * vs{K}';
-            %% backward propagation
-            for l = K-2:-1:1
-                if l == K-2
-                    delta = ws{l+1}' * delta;
-                else
-                    delta = ws{l+1}' * delta(2:end);
-                end
-                delta_ws{l} = delta_ws{l} + eta * delta(2:end) * vs{l}';
-            end            
         end
+        %% gradient calculation
+        delta = (vs{K} - y) .* vs{K} .* (1.0 - vs{K});
+        delta_ws{K-1} = delta_ws{K-1} + eta * delta * vs{K}';
+        %% backward propagation
+        for l = K-2:-1:1
+            if l == K-2
+                delta = ws{l+1}' * delta;
+            else
+                delta = ws{l+1}' * delta(2:end,:);
+            end
+            delta_ws{l} = delta_ws{l} + eta * delta(2:end,:) * vs{l}';
+        end            
         %% weight updation
         for l = 1:K-1
             ws{l} = ws{l} - delta_ws{l};
         end
     end
-end
-%% testing
-tot_err = 0;
-for i = 1:size(X_test,2)
-    x = X_test(:,i);
-    y = Y_test(i);
-    v = [1;x];
+    tot_err = 0;
+    v = [ones(1,size(X_train,2));X_train];
     for j = 1:K-1
         v = sigmoid(ws{j} * v);
         if j ~= K - 1
-            v = [1;v];
+           v = [ones(1,size(v,2));v];
         end
     end
-    err = sum((y-v).^2)/2;
-    tot_err = tot_err + err;
+    err = sum(sum((Y_train-v).^2))/2;
+    fprintf('Error is %f\n', err);
 end
+%% testing
+v = [ones(1,size(X_test,2));X_test];
+for j = 1:K-1
+    v = sigmoid(ws{j} * v);
+    if j ~= K - 1
+       v = [ones(1,size(v,2));v];
+    end
+end
+err = sum(sum((Y_test-v).^2))/2;
 %% results
-fprintf('Total Error is %f\n', tot_err);
+fprintf('Total Error is %f\n', err);
 %% sigmoid
 function val = sigmoid(z)
     val = 1 ./ (1 + exp(-z));
