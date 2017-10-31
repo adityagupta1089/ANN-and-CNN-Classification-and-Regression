@@ -231,14 +231,14 @@ and therefore
 \end{figure}
 \subsection{Gradient Descent}
 The error term for a minibatch of size $n$ (i.e. from $j$ to $j+n-1$) would be:
-$$E = \sum_{i=j}^{j+n-1}\frac 12 || o^i- v_{k}^i||^2$$
+$$E = \sum_{i=j}^{j+n-1}\frac 12 || \vec o^i- \vec v_{k}^i||^2$$
 where superscript $i$ denotes the $i$-th point.
 For a particular point the error would be:
-$$\frac 12 || o- v_{k}||^2=\frac 12\sum_{l=1}^{n_k}(o_{l}-v_{k,l})^2$$
+$$\frac 12 || \vec o- \vec v_{k}||^2=\frac 12\sum_{l=1}^{n_k}(o_{l}-v_{k,l})^2$$
 The gradient wrt weights $w_{k-1,a_{k-1},a_{k}}$ can be obtained using chain rule:\\
 $$\frac{\partial E}{\partial w_{k-1,a_{k-1},a_{k}}}=\underbrace{(v_{k,a_k}-o_{a_k})}_{\delta_{k,a_k}}v_{k-1,a_{k-1}}$$
 Similarly for any previous layer we can obtain:\\
-$$\frac{\partial E}{\partial w_{i,a_i,a_{i+1}}}=\underbrace{\sum_{a_{i+2}=1}^{n_{i+2}} \delta_{i+2,a_{i+2}}w_{i+1,a_{i+1},a_{i+2}}}_{\delta_{i+1,a_{i+1}}}v_{i,a_i}$$
+$$\frac{\partial E}{\partial w_{i,a_i,a_{i+1}}}=\underbrace{v_{i+1,a_{i+1}}(1-v_{i+1,a_{i+1}})\sum_{a_{i+2}=1}^{n_{i+2}} \delta_{i+2,a_{i+2}}w_{i+1,a_{i+1},a_{i+2}}}_{\delta_{i+1,a_{i+1}}}v_{i,a_i}$$
 and wrt a particular point\\
 $$\Delta w_{i,a_i,a_{i+1}}=\eta \delta_{i+1,a_{i+1}}v_{i,a_i}$$
 For minibatch gradient descent we would add up these $\Delta w_{i,a_i,a_{i+1}}$'s. Also note that we also have some biases that would not propagate the gradient backwards so in case of calculation of $\delta_{i,a_i}$ we would neglect the term coming from $v_{a_{i+1}}=1$ i.e. the bias term of the $i+1$-th layer.
@@ -246,21 +246,23 @@ For minibatch gradient descent we would add up these $\Delta w_{i,a_i,a_{i+1}}$'
 Now we find a relation between $\delta_{i,j}$'s. We define $\vec \delta_i$ as follows:
 $$\vec \delta_i=\begin{pmatrix}\delta_{i,1}\\\delta_{i,2}\\...\\\delta_{i,n_i}\end{pmatrix}_{n_i\times 1}$$
 And we define $\delta_{i,j}$ as follows:
-$$\delta_{i,j}=\begin{cases}v_{k,j}-o_j&i=k\\\displaystyle\sum_{x=1}^{n_{i+1}}\delta_{i+1,x}w_{i,j,x}&\text{otherwise}\end{cases}$$
+$$\delta_{i,j}=\begin{cases}v_{k,j}-o_j&i=k\\\displaystyle v_{i,j}(1-v_{i,j})\sum_{x=1}^{n_{i+1}}\delta_{i+1,x}w_{i,j,x}&\text{otherwise}\end{cases}$$
 We can observe that:
 \begin{gather*}\Delta\vec w_{i}=\eta \vec \delta_{i+1}\vec v_{i}^T\\
-\vec\delta_i=\vec w_i^T\vec \delta_{i+1}
+\vec\delta_i=\begin{cases}\vec v_i \cdot (\vec 1-\vec v_i)\cdot \vec w_i^T\vec \delta_{i+1}&i\ne k\\\vec v_k-\vec o&i=k\end{cases}
 \end{gather*}
+where $(\cdot)$ is the elementwise product.
 \subsection{Minibatch gradient Descent}
 We define few more quantities (here superscript $i$ denotes $i$-th point, $n$ denotes total points in a minibatch):
 \begin{gather*}
 \vec V_i = \begin{pmatrix}\vec v_i^1&\vec v_i^2&...&\vec v_i^n\end{pmatrix}\\
+\vec O = \begin{pmatrix}\vec o^1&\vec o^2&...&\vec o^n\end{pmatrix}\\
 \vec \xi_i =\begin{pmatrix}\vec \delta_i^1&\vec \delta_i^2&...&\vec \delta_i^n\end{pmatrix}
 \end{gather*}
 We note that:
 \begin{gather*}
-\vec V_i = \begin{cases}\vec \sigma (\vec w_{i-1}^T \vec V_{i-1})&i\ne k-1\\\vec \vec w_{k-1}^T \vec V_{k-1})&i=k\end{cases}\\
-\vec \xi_i = \vec w_i^T\vec \xi_{i+1}\\
+\vec V_i = \begin{cases}\vec \sigma (\vec w_{i-1}\vec V_{i-1})&i\ne k-1\\ \vec w_{k-1}\vec V_{k-1}&i=k\end{cases}\\
+\vec \xi_i = \begin{cases}\vec V_i\cdot (\vec 1-\vec V_i)\cdot\vec w_i^T\vec \xi_{i+1}&i\ne k\\\vec V_k-\vec O&i=k\end{cases}\\
 \Delta \vec w_i = \eta\vec \xi_{i+1} \vec V_{i}^T=\eta \sum_{j=1}^n\vec \delta_{i+1}^j\vec v_i^{j,T}
 \end{gather*}
 \end{document}

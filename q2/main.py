@@ -5,6 +5,7 @@ import random
 import matplotlib.pyplot as plt
 from tqdm import *
 from scipy.special import expit
+import datetime
 
 class Neural_Network:
     # data lists
@@ -50,7 +51,7 @@ class Neural_Network:
         self.X_test  = np.column_stack(tuple(self.X[split + 1:]))
         self.Y_test  = np.array(self.Y[split + 1:])
 
-    def train(self, epochs, eta, minibatch_size):
+    def train(self, epochs, eta, minibatch_size, log_file):
         # constants
         N = self.X_train.shape[1]
         K = len(self.architecture)
@@ -79,18 +80,27 @@ class Neural_Network:
                 Vs = [np.row_stack((np.ones((1,_N)), x))]
                 for i in range(1, K):
                     if i != K - 1:
+                        # V(i) = sigma (w(i-1) * V(i-1))
                         Vs.append(sigmoid(self.weights[i-1].dot(Vs[-1])))
+                        # add bias terms
                         Vs[-1] = np.row_stack((np.ones((1,_N)), Vs[-1]))
                     else:
+                        # V(k) = w(k-1) * V(k-1), no bias term
                         Vs.append(self.weights[i-1].dot(Vs[-1]))
                 # calculation of gradient
+                # Xi(k) = V(k) - O(k)
                 xi = Vs[-1] - y
+                # Delta w(k-1) = eta * Xi(k) * V(k-1)^T
                 delta_ws[-1] = eta * xi.dot(Vs[-2].T)
                 # backward propagation
                 for i in range(K-3,-1,-1):
-                    xi = self.weights[i+1].T.dot(xi)
-                    delta_ws[i] = eta * xi[1:,:].dot(Vs[i].T)
+                    # Xi(i+1) = V(i+1) * (1 - V(i+1)) * (w(i+1)^T * Xi(i+2))
+                    xi = Vs[i+1] * (1.0 - Vs[i+1]) * self.weights[i+1].T.dot(xi)
+                    # trimmed first row of Xi to prevent flow of gradients from biases
                     xi = xi[1:,:]
+                    # Delta w(i) = eta * Xi(i+1) * Vs(i)^T
+                    delta_ws[i] = eta * xi.dot(Vs[i].T)
+                    
                 # weight update
                 self.weights = [weight - delta_w for (weight, delta_w) in zip(self.weights, delta_ws)]
 
@@ -99,6 +109,7 @@ class Neural_Network:
             test_error  = self.test(train=False)
             train_errors.append(train_error)
             test_errors.append(test_error)
+            log_file.write('%d\tTrain:%f\tTest:%f\n' % (e+1, train_error, test_error))
         return (train_errors, test_errors)
 
     def test(self, train):
@@ -122,7 +133,7 @@ class Neural_Network:
             else:
                 Vs = self.weights[i-1].dot(Vs)
 
-        # sum of sqaured error
+        # sum of squared error
         err = np.square(np.linalg.norm(Vs - y)) / 2
         return err / N
 
@@ -132,16 +143,21 @@ def sigmoid(z):
 if __name__ == "__main__":
 
     # create network
-    architecture    = [1024, 512, 64, 1]
+    architecture    = [1024,10,4,1]#[1024, 512, 64, 1]
     split_ratio     = 0.8
-    epochs          = 5000
+    epochs          = 10
     learning_rate   = 0.01
     minibatch_size  = 64
 
     # neural network training
     network = Neural_Network(architecture)
     network.split_data(split_ratio)
-    train_errors, test_errors = network.train(epochs, learning_rate, minibatch_size)
+    time = datetime.datetime.now().strftime("%d %m %H:%M")
+    f = open('log_'+ time +'.log', 'w')
+    train_errors, test_errors = network.train(epochs, learning_rate, minibatch_size, f)
+    f.close()
+    for i in range(len(network.weights)):
+        np.save('weight' + str(i), network.weights[i])
 
     # plotting
     plt.plot(np.arange(0,epochs+1), train_errors, label='Training Error')
@@ -152,20 +168,8 @@ if __name__ == "__main__":
     plt.legend(loc=0)
 
     # saving figure
-    plt.savefig('plot.eps')
-    plt.savefig('plot.png')
-
-    # writing training error
-    with open('log_train.txt','w') as f:
-        f.write('Training Error\n')
-        for i in range(0,epochs+1):
-            f.write('%d %f\n' % (i,train_errors[i]))
-
-    # writing testing error
-    with open('log_test.txt','w') as f:
-        f.write('Testing Error\n')
-        for i in range(0,epochs+1):
-            f.write('%d %f\n' % (i,test_errors[i]))
+    plt.savefig('plot_' + time + '.eps')
+    plt.savefig('plot_' + time + '.png')
 
     # show plot
     plt.show()
