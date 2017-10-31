@@ -4,7 +4,7 @@ import numpy as np
 import random
 import matplotlib.pyplot as plt
 from tqdm import *
-
+from scipy.special import expit
 
 class Neural_Network:
     # data lists
@@ -30,7 +30,8 @@ class Neural_Network:
         # read individual images
         print('Reading images')
         i=0
-        for i in tqdm(range(len(content))):
+        total = len(content)
+        for i in tqdm(range(total)):
             line = content[i]
             [name, deg] = line.split('\t')
             # name is of the form './abc' so skip the '.' i.e. name[1:]
@@ -50,17 +51,26 @@ class Neural_Network:
         self.Y_test  = np.array(self.Y[split + 1:])
 
     def train(self, epochs, eta, minibatch_size):
+        # constants
         N = self.X_train.shape[1]
         K = len(self.architecture)
+
+        # shuffling
         order = list(range(N))
         random.shuffle(order)
         self.X_train = self.X_train[:,order]
         self.Y_train = self.Y_train[order]
-        train_errors = []
-        test_errors  = []
+
+        # error containers
+        train_errors = [self.test(train=True)]
+        test_errors  = [self.test(train=False)]
+
+        # epochwise training
         print('Training for %d epochs' % epochs)
         for e in tqdm(range(epochs)):
+            # processing each batch
             for i in range(0, N, minibatch_size):
+                # obtain batch
                 x = self.X_train[:,i:i+minibatch_size]
                 y = self.Y_train[i:i+minibatch_size]
                 _N = x.shape[1]
@@ -68,11 +78,13 @@ class Neural_Network:
                 # forward pass
                 Vs = [np.row_stack((np.ones((1,_N)), x))]
                 for i in range(1, K):
-                    Vs.append(sigmoid(self.weights[i-1].dot(Vs[-1])))
                     if i != K - 1:
+                        Vs.append(sigmoid(self.weights[i-1].dot(Vs[-1])))
                         Vs[-1] = np.row_stack((np.ones((1,_N)), Vs[-1]))
+                    else:
+                        Vs.append(self.weights[i-1].dot(Vs[-1]))
                 # calculation of gradient
-                xi = (Vs[-1] - y) * Vs[-1] * (1.0 - Vs[-1])
+                xi = Vs[-1] - y
                 delta_ws[-1] = eta * xi.dot(Vs[-2].T)
                 # backward propagation
                 for i in range(K-3,-1,-1):
@@ -81,30 +93,41 @@ class Neural_Network:
                     xi = xi[1:,:]
                 # weight update
                 self.weights = [weight - delta_w for (weight, delta_w) in zip(self.weights, delta_ws)]
-            """train_error = self.test(train=True)
+
+            # calculation of error
+            train_error = self.test(train=True)
             test_error  = self.test(train=False)
             train_errors.append(train_error)
-            test_errors.append(test_error)"""
+            test_errors.append(test_error)
         return (train_errors, test_errors)
 
     def test(self, train):
+        # check test/training
         if train:
             x, y = self.X_train, self.Y_train
         else:
             x, y = self.X_test, self.Y_test
         err = 0
+
+        # constants
         K  = len(self.architecture)
         N = x.shape[1]
-        Vs = [np.row_stack((np.ones((1,N)), x))]
+
+        # forward pass
+        Vs = np.row_stack((np.ones((1,N)), x))
         for i in range(1, K):
-            Vs.append(sigmoid(self.weights[i-1].dot(Vs[-1])))
             if i != K - 1:
-                Vs[-1] = np.row_stack((np.ones((1,N)), Vs[-1]))
-        err = np.linalg.norm(Vs[-1] - y) / 2
-        return err
+                Vs = sigmoid(self.weights[i-1].dot(Vs))
+                Vs = np.row_stack((np.ones((1,N)), Vs))
+            else:
+                Vs = self.weights[i-1].dot(Vs)
+
+        # sum of sqaured error
+        err = np.square(np.linalg.norm(Vs - y)) / 2
+        return err / N
 
 def sigmoid(z):
-    return 1 / (1 + np.exp(-z))
+    return expit(z)
 
 if __name__ == "__main__":
 
@@ -115,15 +138,34 @@ if __name__ == "__main__":
     learning_rate   = 0.01
     minibatch_size  = 64
 
+    # neural network training
     network = Neural_Network(architecture)
-
     network.split_data(split_ratio)
-    
     train_errors, test_errors = network.train(epochs, learning_rate, minibatch_size)
-    plt.plot(np.arange(1,epochs+1), train_errors, label='Training Error')
-    plt.plot(np.arange(1,epochs+1), test_errors, label='Testing Error')
-    plt.axis([0,epochs+1,0,3.5])
-    plt.ylabel('Sum of Squared Error')
+
+    # plotting
+    plt.plot(np.arange(0,epochs+1), train_errors, label='Training Error')
+    plt.plot(np.arange(0,epochs+1), test_errors, label='Testing Error')
+    plt.ylabel('Mean Squared Error')
     plt.xlabel('Epochs')
-    plt.legend(loc='upper right')
+    plt.xlim([0, epochs])
+    plt.legend(loc=0)
+
+    # saving figure
+    plt.savefig('plot.eps')
+    plt.savefig('plot.png')
+
+    # writing training error
+    with open('log_train.txt','w') as f:
+        f.write('Training Error\n')
+        for i in range(0,epochs+1):
+            f.write('%d %f\n' % (i,train_errors[i]))
+
+    # writing testing error
+    with open('log_test.txt','w') as f:
+        f.write('Testing Error\n')
+        for i in range(0,epochs+1):
+            f.write('%d %f\n' % (i,test_errors[i]))
+
+    # show plot
     plt.show()

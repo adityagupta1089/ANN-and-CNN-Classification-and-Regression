@@ -199,21 +199,11 @@ w_{i,a,b}&\text{ is weight from $a^\text{th}$ node in Layer $i$ to $b^\text{th}$
 \end{align*}
 and thus
 \begin{align*}
-v_{i,j} &=\sigma(\vec w_{i-1,j}^T\vec v_{i-1})\\
-&=  \sigma\left(
-	(w_{i-1,1,j},w_{i-1,2,j},...,w_{i-1,n_{i-1},j})
-	\begin{pmatrix}
-		v_{i-1,1}\\v_{i-1,2}\\...\\v_{i-1,n_{i-1}}
-	\end{pmatrix}
-	\right)\\
-&=\sigma\left(\sum_{l=1}^{n_{i-1}}w_{i-1,l,j}v_{i-1,l}\right)\\
+v_{i,j} &=\begin{cases}\sigma(\vec w_{i-1,j}^T\vec v_{i-1})&i\ne k\\\vec w_{k-1,j}^T\vec v_{k-1}&i=k\end{cases}
 \end{align*}
-and
+and therefore
 \begin{align*}
-\vec v_i&=\begin{pmatrix}v_{i,1}\\v_{i,2}\\...\\v_{i,n_{i}}\end{pmatrix}
-=\begin{pmatrix}\sigma(\vec w_{i-1,1}^T\vec v_{i-1})\\\sigma(\vec w_{i-1,2}^T\vec v_{i-1})\\...\\\sigma(\vec w_{i-1,n_i}^T\vec v_{i-1})\end{pmatrix}
-=\vec \sigma\left(\begin{pmatrix}\vec w_{i-1,1}^T\vec v_{i-1}\\ \vec w_{i-1,2}^T\vec v_{i-1}\\ ...\\ \vec w_{i-1,n_i}^T\vec v_{i-1}\end{pmatrix}\right)\\
-&=\vec \sigma (\vec w_{i-1}\vec v_{i-1})
+\vec v_i= \begin{cases}\vec \sigma (\vec w_{i-1}\vec v_{i-1})&i\ne k-1\\\vec w_{k-1}\vec v_{k-1}&i=k\end{cases}
 \end{align*}
 
 \begin{figure}[H]
@@ -246,7 +236,7 @@ where superscript $i$ denotes the $i$-th point.
 For a particular point the error would be:
 $$\frac 12 || o- v_{k}||^2=\frac 12\sum_{l=1}^{n_k}(o_{l}-v_{k,l})^2$$
 The gradient wrt weights $w_{k-1,a_{k-1},a_{k}}$ can be obtained using chain rule:\\
-$$\frac{\partial E}{\partial w_{k-1,a_{k-1},a_{k}}}=\underbrace{(v_{k,a_k}-o_{a_k})v_{k,a_k}(1-v_{k,a_k})}_{\delta_{k,a_k}}v_{k-1,a_{k-1}}$$
+$$\frac{\partial E}{\partial w_{k-1,a_{k-1},a_{k}}}=\underbrace{(v_{k,a_k}-o_{a_k})}_{\delta_{k,a_k}}v_{k-1,a_{k-1}}$$
 Similarly for any previous layer we can obtain:\\
 $$\frac{\partial E}{\partial w_{i,a_i,a_{i+1}}}=\underbrace{\sum_{a_{i+2}=1}^{n_{i+2}} \delta_{i+2,a_{i+2}}w_{i+1,a_{i+1},a_{i+2}}}_{\delta_{i+1,a_{i+1}}}v_{i,a_i}$$
 and wrt a particular point\\
@@ -256,7 +246,7 @@ For minibatch gradient descent we would add up these $\Delta w_{i,a_i,a_{i+1}}$'
 Now we find a relation between $\delta_{i,j}$'s. We define $\vec \delta_i$ as follows:
 $$\vec \delta_i=\begin{pmatrix}\delta_{i,1}\\\delta_{i,2}\\...\\\delta_{i,n_i}\end{pmatrix}_{n_i\times 1}$$
 And we define $\delta_{i,j}$ as follows:
-$$\delta_{i,j}=\begin{cases}(v_{k,j}-o_j)v_{k,j}(1-v_{k,j})&i=k\\\displaystyle\sum_{x=1}^{n_{i+1}}\delta_{i+1,x}w_{i,j,x}&\text{otherwise}\end{cases}$$
+$$\delta_{i,j}=\begin{cases}v_{k,j}-o_j&i=k\\\displaystyle\sum_{x=1}^{n_{i+1}}\delta_{i+1,x}w_{i,j,x}&\text{otherwise}\end{cases}$$
 We can observe that:
 \begin{gather*}\Delta\vec w_{i}=\eta \vec \delta_{i+1}\vec v_{i}^T\\
 \vec\delta_i=\vec w_i^T\vec \delta_{i+1}
@@ -269,7 +259,7 @@ We define few more quantities (here superscript $i$ denotes $i$-th point, $n$ de
 \end{gather*}
 We note that:
 \begin{gather*}
-\vec V_i = \vec \sigma (\vec w_{i-1}^T \vec V_{i-1})\\
+\vec V_i = \begin{cases}\vec \sigma (\vec w_{i-1}^T \vec V_{i-1})&i\ne k-1\\\vec \vec w_{k-1}^T \vec V_{k-1})&i=k\end{cases}\\
 \vec \xi_i = \vec w_i^T\vec \xi_{i+1}\\
 \Delta \vec w_i = \eta\vec \xi_{i+1} \vec V_{i}^T=\eta \sum_{j=1}^n\vec \delta_{i+1}^j\vec v_i^{j,T}
 \end{gather*}
