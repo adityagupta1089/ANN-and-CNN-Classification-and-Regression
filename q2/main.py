@@ -148,7 +148,7 @@ if __name__ == "__main__":
     split_ratio     = 0.8
     epochs          = 1000
     learning_rate   = 0.01
-    minibatch_size  = 32
+    minibatch_size  = 128
 
     # neural network training
     network = Neural_Network(architecture)
