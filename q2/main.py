@@ -110,7 +110,7 @@ class Neural_Network:
             train_errors.append(train_error)
             test_errors.append(test_error)
             log_file.write('%d\tTrain:%f\tTest:%f\n' % (e+1, train_error, test_error))
-            if e % 100 == 0:
+            if e % 1 == 0:
                 log_file.flush()
         return (train_errors, test_errors)
 
