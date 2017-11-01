@@ -146,9 +146,9 @@ if __name__ == "__main__":
     # create network
     architecture    = [1024, 512, 64, 1]
     split_ratio     = 0.8
-    epochs          = 5000
+    epochs          = 1000
     learning_rate   = 0.01
-    minibatch_size  = 64
+    minibatch_size  = 32
 
     # neural network training
     network = Neural_Network(architecture)
