@@ -110,7 +110,7 @@ class Neural_Network:
             train_errors.append(train_error)
             test_errors.append(test_error)
             log_file.write('%d\tTrain:%f\tTest:%f\n' % (e+1, train_error, test_error))
-            if e % 1 == 0:
+            if e % 100 == 0 or e < 100:
                 log_file.flush()
         return (train_errors, test_errors)
 
@@ -147,8 +147,8 @@ if __name__ == "__main__":
     architecture    = [1024, 512, 64, 1]
     split_ratio     = 0.8
     epochs          = 1000
-    learning_rate   = 0.01
-    minibatch_size  = 128
+    learning_rate   = 0.05
+    minibatch_size  = 64
 
     # neural network training
     network = Neural_Network(architecture)
