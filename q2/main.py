@@ -38,7 +38,7 @@ class Neural_Network:
             # name is of the form './abc' so skip the '.' i.e. name[1:]
             img = cv2.imread('../steering' + name[1:], cv2.IMREAD_GRAYSCALE)
             self.X.append(img.flatten().T / 255)
-            self.Y.append(float(deg[:-2]))
+            self.Y.append(float(deg[:-1]))
 
         # initialize weights and layers
         # ni+1 for a bias term
@@ -95,7 +95,7 @@ class Neural_Network:
                 # backward propagation
                 for i in range(K-3,-1,-1):
                     # Xi(i+1) = V(i+1) * (1 - V(i+1)) * (w(i+1)^T * Xi(i+2))
-                    xi = Vs[i+1] * (1.0 - Vs[i+1]) * self.weights[i+1].T.dot(xi)
+                    xi = Vs[i+1] * (1 - Vs[i+1]) * self.weights[i+1].T.dot(xi)
                     # trimmed first row of Xi to prevent flow of gradients from biases
                     xi = xi[1:,:]
                     # Delta w(i) = eta * Xi(i+1) * Vs(i)^T
@@ -110,6 +110,8 @@ class Neural_Network:
             train_errors.append(train_error)
             test_errors.append(test_error)
             log_file.write('%d\tTrain:%f\tTest:%f\n' % (e+1, train_error, test_error))
+            if e % 100 == 0:
+                log_file.flush()
         return (train_errors, test_errors)
 
     def test(self, train):
@@ -118,7 +120,6 @@ class Neural_Network:
             x, y = self.X_train, self.Y_train
         else:
             x, y = self.X_test, self.Y_test
-        err = 0
 
         # constants
         K  = len(self.architecture)
@@ -134,7 +135,7 @@ class Neural_Network:
                 Vs = self.weights[i-1].dot(Vs)
 
         # sum of squared error
-        err = np.square(np.linalg.norm(Vs - y)) / 2
+        err = np.square(np.linalg.norm(Vs - y))
         return err / N
 
 def sigmoid(z):
@@ -143,21 +144,27 @@ def sigmoid(z):
 if __name__ == "__main__":
 
     # create network
-    architecture    = [1024,10,4,1]#[1024, 512, 64, 1]
+    architecture    = [1024, 512, 64, 1]
     split_ratio     = 0.8
-    epochs          = 10
+    epochs          = 5000
     learning_rate   = 0.01
     minibatch_size  = 64
 
     # neural network training
     network = Neural_Network(architecture)
     network.split_data(split_ratio)
-    time = datetime.datetime.now().strftime("%d %m %H:%M")
+    time = datetime.datetime.now().strftime("%d_%m_%H:%M")
     f = open('log_'+ time +'.log', 'w')
+    f.write('architecture = ' + str(architecture) + '\n')
+    f.write('split_ratio = ' + str(split_ratio) + '\n')
+    f.write('epochs = ' + str(epochs) + '\n')
+    f.write('learning_rate = ' + str(learning_rate) + '\n')
+    f.write('minibatch_size = ' + str(minibatch_size) + '\n')
+    f.flush()
     train_errors, test_errors = network.train(epochs, learning_rate, minibatch_size, f)
     f.close()
     for i in range(len(network.weights)):
-        np.save('weight' + str(i), network.weights[i])
+        np.savetxt('weight_' + time + '_' + str(i), network.weights[i])
 
     # plotting
     plt.plot(np.arange(0,epochs+1), train_errors, label='Training Error')
