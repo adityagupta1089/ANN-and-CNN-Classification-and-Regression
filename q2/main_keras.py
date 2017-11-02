@@ -45,17 +45,16 @@ class Neural_Network:
         self.model.add(Conv2D(32, kernel_size=(3,3), activation='relu', input_shape=(32,32,1)))
         self.model.add(Conv2D(32, kernel_size=(3,3), activation='relu'))
         self.model.add(MaxPooling2D(pool_size=(2,2)))
-        self.model.add(Dropout(0.25))
         self.model.add(Conv2D(32, kernel_size=(3,3), activation='relu'))
         self.model.add(Conv2D(32, kernel_size=(3,3), activation='relu'))
         self.model.add(MaxPooling2D(pool_size=(2,2)))
-        self.model.add(Dropout(0.25))
         self.model.add(Flatten())
-        self.model.add(Dense(64, activation='sigmoid'))
+        self.model.add(Dense(64, activation='relu'))
+        self.model.add(Dense(64, activation='relu'))
         self.model.add(Dense(1,activation='linear'))
         
         self.model.compile(loss='mean_squared_error',
-            optimizer=keras.optimizers.Adadelta(),
+            optimizer='sgd',
             metrics=['accuracy'])
         
         
