@@ -249,9 +249,9 @@ And we define $\delta_{i,j}$ as follows:
 $$\delta_{i,j}=\begin{cases}v_{k,j}-o_j&i=k\\\displaystyle v_{i,j}(1-v_{i,j})\sum_{x=1}^{n_{i+1}}\delta_{i+1,x}w_{i,j,x}&\text{otherwise}\end{cases}$$
 We can observe that:
 \begin{gather*}\Delta\vec w_{i}=\eta \vec \delta_{i+1}\vec v_{i}^T\\
-\vec\delta_i=\begin{cases}\vec v_i \cdot (\vec 1-\vec v_i)\cdot \vec w_i^T\vec \delta_{i+1}&i\ne k\\\vec v_k-\vec o&i=k\end{cases}
+\vec\delta_i=\begin{cases}\vec v_i \circ (\vec 1-\vec v_i)\circ \vec w_i^T\vec \delta_{i+1}&i\ne k\\\vec v_k-\vec o&i=k\end{cases}
 \end{gather*}
-where $(\cdot)$ is the elementwise product.
+where $(\circ)$ is the elementwise product.
 \subsection{Minibatch gradient Descent}
 We define few more quantities (here superscript $i$ denotes $i$-th point, $n$ denotes total points in a minibatch):
 \begin{gather*}
@@ -262,7 +262,24 @@ We define few more quantities (here superscript $i$ denotes $i$-th point, $n$ de
 We note that:
 \begin{gather*}
 \vec V_i = \begin{cases}\vec \sigma (\vec w_{i-1}\vec V_{i-1})&i\ne k-1\\ \vec w_{k-1}\vec V_{k-1}&i=k\end{cases}\\
-\vec \xi_i = \begin{cases}\vec V_i\cdot (\vec 1-\vec V_i)\cdot\vec w_i^T\vec \xi_{i+1}&i\ne k\\\vec V_k-\vec O&i=k\end{cases}\\
+\vec \xi_i = \begin{cases}\vec V_i\circ (\vec 1-\vec V_i)\circ\vec w_i^T\vec \xi_{i+1}&i\ne k\\\vec V_k-\vec O&i=k\end{cases}\\
 \Delta \vec w_i = \eta\vec \xi_{i+1} \vec V_{i}^T=\eta \sum_{j=1}^n\vec \delta_{i+1}^j\vec v_i^{j,T}
 \end{gather*}
+\subsection{Dropout}
+For implementation of dropout, some of the nodes in the layers $V_2$ to $V_{k-1}$ (no dropout to input or output layer) are disabled with probability $p$ (say $0.5$), thus the modified layer vectors would become:
+\begin{gather*}
+V_i'=V_i\circ D_i\tag{$1<i<k$}
+\end{gather*}
+where $D_i$ is a matrix of independent Bernoulli random variables with probability $p$, i.e. $(D_i)_{\alpha,\beta}\sim{\rm Bernoulli}(p), 1\le \alpha \le n_i, 1\le \beta \le n$ (recall $n$ is minibatch size) and of the same size as of $V_i$. During backpropagation, the $\xi$ values are modified with the same $D_i$ as:
+\begin{align*}
+\xi_i'&=\xi_i\circ D_i \\&= V_i' \circ (1-V_i') \circ \vec w_i^T\vec \xi_{i+1}\;'\circ D_i\\\tag{$1<i<k$}
+&=(D_i\circ V'_i)\circ (1-V_i') \circ \vec w_i^T\vec \xi_{i+1}\;'\\
+&=V_i'\circ (1-V_i') \circ \vec w_i^T\vec \xi_{i+1}\;'\\
+&=\xi_i
+\end{align*}
+We note that for $i<k$ (in particular $1<i<k$), the $\xi_i$ terms already include $D_i$'s whose inclusion further doesn't make any change so we don't need to change anything in the backpropagation. We further note that:
+\begin{itemize}
+\item The bias term is not multiplied with $D_i$.
+\item At testing we multiply the weights by $p$ and the network is used without dropout.
+\end{itemize}
 \end{document}
