@@ -147,7 +147,7 @@ if __name__ == "__main__":
     architecture    = [1024, 512, 64, 1]
     split_ratio     = 0.8
     epochs          = 1000
-    learning_rate   = 0.05
+    learning_rate   = 0.005
     minibatch_size  = 64
 
     # neural network training
