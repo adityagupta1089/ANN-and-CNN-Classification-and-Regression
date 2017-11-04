@@ -8,9 +8,10 @@
 \usepackage{ifthen}
 \usepackage{color}
 \usepackage{graphicx}
+\usepackage{hyperref}
 \newcommand{\myScale}{0.56}
 \title{CSL603 - Lab 3\\Multi Layer Perceptron}
-\author{Aditya Gupta\\2015CSB1003}
+\author{Aditya Gupta\\2015CSB1003\\Soumyadeep Roy\\2015CSB1035}
 \begin{document}
 \maketitle
 \section{2-Dimensional 3-Class Classification problem}
@@ -266,20 +267,126 @@ We note that:
 \Delta \vec w_i = \eta\vec \xi_{i+1} \vec V_{i}^T=\eta \sum_{j=1}^n\vec \delta_{i+1}^j\vec v_i^{j,T}
 \end{gather*}
 \subsection{Dropout}
-For implementation of dropout, some of the nodes in the layers $V_2$ to $V_{k-1}$ (no dropout to input or output layer) are disabled with probability $p$ (say $0.5$), thus the modified layer vectors would become:
+For implementation of dropout, some of the nodes in the layers $V_1$ to $V_{k-1}$ are disabled with probability $p$ (say $0.5$), thus the modified layer vectors would become:
 \begin{gather*}
-V_i'=V_i\circ D_i\tag{$1<i<k$}
+V_i'=V_i\circ D_i\tag{$i<k$}
 \end{gather*}
 where $D_i$ is a matrix of independent Bernoulli random variables with probability $p$, i.e. $(D_i)_{\alpha,\beta}\sim{\rm Bernoulli}(p), 1\le \alpha \le n_i, 1\le \beta \le n$ (recall $n$ is minibatch size) and of the same size as of $V_i$. During backpropagation, the $\xi$ values are modified with the same $D_i$ as:
 \begin{align*}
-\xi_i'&=\xi_i\circ D_i \\&= V_i' \circ (1-V_i') \circ \vec w_i^T\vec \xi_{i+1}\;'\circ D_i\\\tag{$1<i<k$}
+\xi_i'&=\xi_i\circ D_i \\&= V_i' \circ (1-V_i') \circ \vec w_i^T\vec \xi_{i+1}\;'\circ D_i\\\tag{$i<k$}
 &=(D_i\circ V'_i)\circ (1-V_i') \circ \vec w_i^T\vec \xi_{i+1}\;'\\
 &=V_i'\circ (1-V_i') \circ \vec w_i^T\vec \xi_{i+1}\;'\\
 &=\xi_i
 \end{align*}
-We note that for $i<k$ (in particular $1<i<k$), the $\xi_i$ terms already include $D_i$'s whose inclusion further doesn't make any change so we don't need to change anything in the backpropagation. We further note that:
+We note that for $i<k$, the $\xi_i$ terms already include $D_i$'s whose inclusion further doesn't make any change so we don't need to change anything in the backpropagation. We further note that:
 \begin{itemize}
 \item The bias term is not multiplied with $D_i$.
 \item At testing we multiply the weights by $p$ and the network is used without dropout.
 \end{itemize}
+\subsection{Observations}
+The following graphs were observed
+\subsubsection{Training for $5000$ epochs at $\eta=0.01$ without dropout}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{../q2/part1}
+\caption{Variation of Training and Testing error as a function of number of epochs with parameters $\eta=0.01$, architecture $[1024,512,64,1]$, split ratio $0.8$, epochs $5000$, minibatch size $64$, dropout rate $0$.}
+\label{fig:fig16}
+\end{figure}
+\subsubsection{Varying minibatch size}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{../q2/part2_32}
+\caption{Variation of Training and Testing error as a function of number of epochs with parameters $\eta=0.01$, architecture $[1024,512,64,1]$, split ratio $0.8$, epochs $1000$, {\bf minibatch size $32$}, dropout rate $0$.}
+\label{fig:fig17}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{../q2/part2_64}
+\caption{Variation of Training and Testing error as a function of number of epochs with parameters $\eta=0.01$, architecture $[1024,512,64,1]$, split ratio $0.8$, epochs $1000$, {\bf minibatch size $64$}, dropout rate $0$.}
+\label{fig:fig18}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{../q2/part2_128}
+\caption{Variation of Training and Testing error as a function of number of epochs with parameters $\eta=0.01$, architecture $[1024,512,64,1]$, split ratio $0.8$, epochs $1000$, {\bf minibatch size $128$}, dropout rate $0$.}
+\label{fig:fig19}
+\end{figure}
+\subsubsection{Dropout}
+\subsubsection{Varying Learning Rate}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{../q2/part4_0p005}
+\caption{Variation of Training and Testing error as a function of number of epochs with parameters {\bf learning rate $\eta=0.005$}, architecture $[1024,512,64,1]$, split ratio $0.8$, epochs $1000$, minibatch size $128$, dropout rate $0$.}
+\label{fig:fig20}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{../q2/part4_0p001}
+\caption{Variation of Training and Testing error as a function of number of epochs with parameters {\bf learning rate $\eta=0.001$}, architecture $[1024,512,64,1]$, split ratio $0.8$, epochs $1000$, minibatch size $128$, dropout rate $0$.}
+\label{fig:fig21}
+\end{figure}
+\begin{figure}[H]
+\includegraphics[scale=\myScale]{../q2/part4_0p05}
+\caption{Variation of Training and Testing error as a function of number of epochs with parameters {\bf learning rate $\eta=0.05$}, architecture $[1024,512,64,1]$, split ratio $0.8$, epochs $1000$, minibatch size $128$, dropout rate $0$.}
+\label{fig:fig22}
+\end{figure}
+\subsection{Conclusions and Discussions}
+\subsubsection{Learning Rate}
+\subsubsection{Minibatch Size}
+\subsubsection{Dropout}
+\section{Improved network for steering angle prediction}
+\subsection{Network Structure}
+The network structure was \verb|[Conv-RELU-Conv-Relu-MaxPool]|$\times 3$\verb|-Dense-Relu-Dense|
+where each Convolutional layer had $32$ filters of size $3\times3$ (and a bias) and max pooling was done of size $2\times2$, the dense layers had $64$ and $1$ nodes respectively.
+\subsubsection{Convolution Layer}
+Suppose we have an image$I$ of size $H\times W$ with pixels $x_{i,j}$ which is cross-correlated with a kernel $K$ with weights $w_{i,j}$ of size $k_1\times k_2$ with bias $b$ and an activation $f$, then the resultant image has the pixels:
+$$(I*K)_{i,j}=x'_{i,j}=\sum_{m=0}^{k_1-1}\sum_{n=0}^{k_2-1}x_{i+m,j+n}w_{m,n}+b$$
+and after activation:
+$$o'_{i,j}=f(x'_{i,j})$$
+Let us find the weight update equations with $t$ as target value and $o^k$ as the predicted value (output at $k$-th layer), the given error is:
+$$E=\frac 12\sum ||t-o^k||^2$$
+and therefore for a resultant image of size $(H-k_1+1)\times(W-k_2+1)$ (here superscripts denote the layer index):
+\begin{align*}
+\frac{\partial E}{\partial w_{m',n'}^l} &= \sum_{i=0}^{H-k_1}\sum_{j=0}^{W-k_2}\underbrace{\frac {\partial E}{\partial x_{i,j}^{l}}}_{\delta_{i,j}^{l}}\frac{\partial x_{i,j}^{l}}{\partial w_{m',n'}^l}\\
+&= \sum_{i=0}^{H-k_1}\sum_{j=0}^{W-k_2}\delta_{i,j}^{l}\frac{\partial}{\partial w_{m',n'}^l}\left(\sum_{m=0}^{k_1}\sum_{n=0}^{k_2} w_{m,n}^lo_{i+m,j+n}^{l-1}+b^l\right)\\
+\frac{\partial x_{i,j}^{l+1}}{\partial w_{m',n'}^l}&=\frac{\partial}{\partial w_{m',n'}^l}\left(w_{0,0}^lo_{i,j}^{l-1}+...+w_{m',n'}^lo_{i+m',j+n'}^{l-1}+...+b^l\right)\\
+&=o_{i+m',j+n'}^{l-1}\\
+\frac{\partial E}{\partial w_{m',n'}^l}&=\sum_{i=0}^{H-k_1}\sum_{j=0}^{W-k_2}\delta_{i,j}^{l}o_{i+m',j+n'}^{l-1}
+\end{align*}
+Hence we can see that the gradients are also a cross-correlation operation as follows:
+$$\left(\overrightarrow{\frac{\partial E}{\partial w^l}}\right)_{i,j}=(I'*\vec \delta)_{i,j}$$
+Now let us find a relation between $\delta_{i,j}^k$'s:
+\begin{align*}
+\delta_{i,j}^l&=\frac{\partial E}{\partial x_{i,j}^l}=\sum_{m,n}\frac{\partial E}{\partial x_{m,n}^{l+1}}\frac{\partial x_{m,n}^{l+1}}{\partial x_{i,j}^l}\\
+&=\sum_{m,n}\delta_{m,n}^{l+1}\frac{\partial x_{m,n}^{l+1}}{\partial x_{i,j}^l}
+\end{align*}
+and hence:
+\begin{align*}
+\frac{\partial x_{m,n}^{l+1}}{\partial x_{i,j}^l}&=\frac{\partial }{\partial x_{i,j}^l}\left(\sum_{m'}\sum_{n'}w_{m',n'}^{l+1}o_{m+m',n+n'}^l+b^{l+1}\right)\\
+&=\frac{\partial }{\partial x_{i,j}^l}\left(\sum_{m'}\sum_{n'}w_{m',n'}^{l+1}f(x_{m+m',n+n'}^l)+b^{l+1}\right)\\
+&=\frac{\partial }{\partial x_{i,j}^l}\left(w_{i-m,j-n}^{l+1}f(x_{i,j}^l)\right)\\
+&=w_{i-m,j-n}^{l+1}f'(x_{i,j}^l)\\
+\delta_{i,j}^l&=\frac{\partial E}{\partial x_{i,j}^l}=\sum_{m,n}\delta_{m,n}^{l+1}w_{i-m,j-n}^{l+1}f'(x_{i,j}^l)
+\end{align*}
+We can see that this is also a cross correlation operation with weights transposed:
+\begin{gather*}
+\vec\delta\,^l=(\vec \delta\,^{l+1}*\vec w\,^{T,l+1})\circ \vec f'
+\end{gather*}
+\begin{thebibliography}{}
+\bibitem{} 
+\href{https://medium.com/towards-data-science/ learning-rate-schedules-and-adaptive-learning-rate-methods-for-deep-learning-2c8f433990d1}{Learning Rate Schedules and Adaptive Learning Rate Methods for Deep Learning}
+
+ 
+\bibitem{} 
+\href{http://www.jefkine.com/general/2016/09/05/backpropagation-in-convolutional-neural-networks/}{Backpropagation In Convolutional Neural Networks}
+
+\bibitem{} 
+\href{http://cs231n.github.io/convolutional-networks/}{Convolutional Neural Networks: Architectures, Convolution / Pooling Layers}
+
+\bibitem{}
+\href{http://cs231n.github.io/neural-networks-3/}{Neural Networks Part 3: Learning and Evaluation}
+
+\bibitem{}
+\href{https://wiseodd.github.io/techblog/2016/07/16/convnet-conv-layer/}{Convnet: Implementing Convolution Layer with Numpy}
+
+\bibitem{}
+\href{https://wiseodd.github.io/techblog/2016/07/18/convnet-maxpool-layer/}{Convnet: Implementing Maxpool Layer with Numpy}
+
+\bibitem{}
+\href{https://stackoverflow.com/questions/30109068/implement-matlabs-im2col-sliding-in-python}{Implement MATLAB's im2col ``sliding'' in Python} and \href{https://stackoverflow.com/questions/42474491/implement-matlabs-col2im-sliding-in-python}{Implement MATLAB's col2im 'sliding' in Python}
+\end{thebibliography}
 \end{document}

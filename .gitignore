@@ -4,3 +4,11 @@
 *.synctex.gz
 *.asv
 steering/
+weight*
+.checkstyle
+.project
+.pydevproject
+*.mat
+*.fig
+__pycache__/
+q2/test/*

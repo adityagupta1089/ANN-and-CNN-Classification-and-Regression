@@ -33,7 +33,7 @@ class Neural_Network:
         # read individual images
         print('Reading images')
         i = 0
-        total = 20  # len(content)
+        total = len(content)
         for i in tqdm(range(total)):
             line = content[i]
             [name, deg] = line.split('\t')
@@ -45,6 +45,9 @@ class Neural_Network:
         # initialize weights and layers
         # ni+1 for a bias term
         self.weights = [(np.random.rand(ni_1, ni + 1) - 0.5) / 50 for (ni, ni_1) in zip(architecture, architecture[1:])]
+        # initializing weights of bias to zero
+        for i in range(len(self.weights)):
+            self.weights[i][:,0] = np.atleast_2d(np.zeros((self.weights[i].shape[0],1))).T
 
     def split_data(self, ratio):
         split = math.floor(ratio * len(self.X))
@@ -81,9 +84,10 @@ class Neural_Network:
                 # forward pass
                 Vs = [np.row_stack((np.ones((1, _N)), x))]
                 for i in range(1, K):
-                    if dropout and i > 1:  # no dropout to input layer
+                    if dropout:
                         # not changing bias term
-                        Vs[-1][1:,] *= np.tile(np.random.binomial(1, 1 - dropout_rate, (Vs[-1].shape[0] - 1, 1)), _N)
+                        dropout_matrix = np.tile(np.random.binomial(1, 1 - dropout_rate, (Vs[-1].shape[0] - 1, 1)), _N)
+                        Vs[-1][1:,] *= dropout_matrix
                     if i != K - 1:
                         # V(i) = sigma (w(i-1) * V(i-1))
                         Vs.append(sigmoid(self.weights[i - 1].dot(Vs[-1])))
@@ -96,7 +100,7 @@ class Neural_Network:
                 # Xi(k) = V(k) - O(k)
                 xi = Vs[-1] - y
                 # Delta w(k-1) = eta * Xi(k) * V(k-1)^T
-                delta_ws[-1] = eta * xi.dot(Vs[-2].T)
+                delta_ws[-1] = eta * xi.dot(Vs[-2].T) / _N
                 # backward propagation
                 for i in range(K - 3, -1, -1):
                     # Xi(i+1) = V(i+1) * (1 - V(i+1)) * (w(i+1)^T * Xi(i+2))
@@ -104,7 +108,7 @@ class Neural_Network:
                     # trimmed first row of Xi to prevent flow of gradients from biases
                     xi = xi[1:, :]
                     # Delta w(i) = eta * Xi(i+1) * Vs(i)^T
-                    delta_ws[i] = eta * xi.dot(Vs[i].T)
+                    delta_ws[i] = eta * xi.dot(Vs[i].T) / _N
                     
                 # weight update
                 self.weights = [weight - delta_w for (weight, delta_w) in zip(self.weights, delta_ws)]
@@ -134,7 +138,7 @@ class Neural_Network:
         Vs = np.row_stack((np.ones((1, N)), x))
         for i in range(1, K):
             weight = self.weights[i - 1]
-            if dropout and i > 1:  # no dropout to input layer
+            if dropout:
                 # not changing bias weights
                 weight[:, 1:] *= 1 - dropout_rate
             if i != K - 1:
@@ -144,7 +148,7 @@ class Neural_Network:
                 Vs = weight.dot(Vs)
 
         # sum of squared error
-        err = np.square(np.linalg.norm(Vs - y))
+        err = np.square(np.linalg.norm(Vs - y)) / 2
         return err / N
 
 def sigmoid(z):
@@ -155,8 +159,8 @@ if __name__ == "__main__":
     # create network
     architecture = [1024, 512, 64, 1]
     split_ratio = 0.8
-    epochs = 5000
-    learning_rate = 0.001
+    epochs = 1000
+    learning_rate = 0.01
     dropout_rate = 0.5
     minibatch_size = 64
 
