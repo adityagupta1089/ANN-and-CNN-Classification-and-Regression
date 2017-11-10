@@ -1,7 +1,0 @@
-epochs = 1000
-architecture    optimizer   train error     test error 
-512-64x5-1      RMSprop     
-                Adadelta    
-                Adam        
-                Adagrad     
-

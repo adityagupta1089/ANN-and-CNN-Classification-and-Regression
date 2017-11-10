@@ -41,35 +41,28 @@ class Neural_Network:
             img = cv2.imread('../steering' + name[1:], cv2.IMREAD_GRAYSCALE)
             self.X.append(img.flatten() / 255)
             self.Y.append(float(deg[:-1]))
-        """ COVNET
+        
         self.model = Sequential()
+        """self.model.add(Conv2D(32, kernel_size=(3,3), activation='relu', input_shape=(32,32,1)))
         self.model.add(Conv2D(32, kernel_size=(3,3), activation='relu', input_shape=(32,32,1)))
-        self.model.add(Conv2D(32, kernel_size=(3,3), activation='relu'))
         self.model.add(MaxPooling2D(pool_size=(2,2)))
-        self.model.add(Conv2D(32, kernel_size=(3,3), activation='relu'))
-        self.model.add(Conv2D(32, kernel_size=(3,3), activation='relu'))
+        self.model.add(Dropout(0.25))
+        self.model.add(Conv2D(32, kernel_size=(3,3), activation='relu', input_shape=(32,32,1)))
+        self.model.add(Conv2D(32, kernel_size=(3,3), activation='relu', input_shape=(32,32,1)))
         self.model.add(MaxPooling2D(pool_size=(2,2)))
+        self.model.add(Dropout(0.25))
         self.model.add(Flatten())
         self.model.add(Dense(64, activation='relu'))
         self.model.add(Dense(64, activation='relu'))
         self.model.add(Dense(1,activation='linear'))
         
         self.model.compile(loss='mean_squared_error',
+            optimizer='sgd')"""
+        self.model.add(Dense(10, activation='sigmoid', input_shape=(1024,)))
+        self.model.add(Dense(4, activation='sigmoid'))
+        self.model.add(Dense(1, activation='sigmoid'))
+        self.model.compile(loss='mean_squared_error',
             optimizer=keras.optimizers.RMSprop())
-        """
-        
-        
-        """ DENSE """
-        self.model = Sequential()
-        self.model.add(Dense(1024, activation='sigmoid', input_shape=(1024,)))
-        self.model.add(Dropout(0.5))
-        self.model.add(Dense(512, activation='sigmoid'))
-        self.model.add(Dropout(0.5))
-        self.model.add(Dense(64, activation='sigmoid'))    
-        self.model.add(Dropout(0.5))
-        self.model.add(Dense(1, activation='linear'))
-        self.model.compile(optimizer='sgd',
-            loss='mean_squared_error')
 
     def split_data(self, ratio):
         split        = math.floor(ratio * len(self.X))
@@ -82,7 +75,7 @@ class Neural_Network:
         history = self.model.fit(self.X_train, self.Y_train,
             batch_size=minibatch_size,
             epochs=epochs,
-            verbose=2,
+            verbose=1,
             validation_data=(self.X_test, self.Y_test))        
         plt.plot(history.history['loss'])
         plt.plot(history.history['val_loss'])

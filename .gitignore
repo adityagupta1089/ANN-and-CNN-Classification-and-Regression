@@ -12,3 +12,8 @@ weight*
 *.fig
 __pycache__/
 q2/test/*
+*.tar.gz
+*.eps
+*.png
+*eps-converted-to.pdf
+results_*.txt

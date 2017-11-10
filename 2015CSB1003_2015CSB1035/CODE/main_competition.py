@@ -245,7 +245,7 @@ if __name__ == "__main__":
     split_ratio = 0.8
     epochs = 5000
     minibatch_size = 64
-    eta = 0.01
+    eta = 0.001
 
     X, Y = read_train_data('../steering/data.txt', '../steering')
     X_test = read_test_data('./test/test-data.txt', './test')
@@ -253,9 +253,12 @@ if __name__ == "__main__":
     X_train, Y_train, X_validation, Y_validation = split_data(X, Y, split_ratio)
     
     architecture = [
+            Conv(4, (3,3)),
+            MaxPool((2,2), 2),
             Flatten(),
-            Dense(10, 'sigmoid'),
-            Dense(4, 'sigmoid'),
+            Dense(256, 'sigmoid'),
+            Dense(64, 'sigmoid'),
+            Dense(64, 'sigmoid'),
             Dense(1, 'linear'),
         ]
         
